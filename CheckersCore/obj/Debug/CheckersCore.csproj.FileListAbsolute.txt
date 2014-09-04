@@ -1,0 +1,5 @@
+C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersCore\bin\Debug\CheckersCore.dll
+C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersCore\bin\Debug\CheckersCore.pdb
+C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersCore\obj\Debug\CheckersCore.csprojResolveAssemblyReference.cache
+C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersCore\obj\Debug\CheckersCore.dll
+C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersCore\obj\Debug\CheckersCore.pdb
