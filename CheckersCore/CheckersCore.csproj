@@ -42,7 +42,6 @@
   <ItemGroup>
     <Compile Include="CoordinatesHelper.cs" />
     <Compile Include="Game.cs" />
-    <Compile Include="Gameboard.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

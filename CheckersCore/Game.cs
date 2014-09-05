@@ -11,7 +11,7 @@ namespace CheckersCore
     {
         public string[,] Gameboard { get; private set; }
 
-        private readonly Point[] _diagonalMoves =
+        private readonly Point[] _moves =
         {
             new Point(1, 1),
             new Point(1, -1),
@@ -26,7 +26,7 @@ namespace CheckersCore
 
         public void AddPiece(int x, int y, string color)
         {
-            ValidateAdding(x, y);
+            ValidateAdding(new Point(x, y));
             Gameboard[x, y] = color;
         }
 
@@ -34,134 +34,159 @@ namespace CheckersCore
         {
             ValidateMove(new Point(x, y), new Point(targetX, targetY));
             Gameboard[targetX, targetY] = Gameboard[x, y];
-            RemovePiece(x, y);
+            RemovePiece(new Point(x, y));
         }
 
         public void Attack(int x, int y, int targetX, int targetY)
         {
             ValidateAttack(new Point(x, y), new Point(targetX, targetY));
 
-            var endPoint = GetAttackEndpoint(new Point(x, y), new Point(targetX, targetY));
+            var attackEndpoint = DetermineAttackEndpoint(new Point(x, y), new Point(targetX, targetY));
 
-            Gameboard[endPoint.X, endPoint.Y] = Gameboard[x, y];
-            RemovePiece(targetX, targetY);
-            RemovePiece(x, y);
+            Gameboard[attackEndpoint.X, attackEndpoint.Y] = Gameboard[x, y];
+            RemovePiece(new Point(x, y));
+            RemovePiece(new Point(targetX, targetY));
+
         }
 
-        public void RemovePiece(int x, int y)
+        public void RemovePiece(Point position)
         {
-            if (!IsEmptyCell(x, y))
-                Gameboard[x, y] = null;
+            if (!IsEmpty(position))
+                Gameboard[position.X, position.Y] = null;
         }
 
         public void RemoveAllPieces()
         {
             for (int i = 0; i < Gameboard.GetLength(0); i++)
                 for (int j = 0; j < Gameboard.GetLength(1); j++)
-                    RemovePiece(i, j);
+                    RemovePiece(new Point(i, j));
         }
 
-        private void ValidateAdding(int x, int y)
+        public bool IsValidMove(Point start, Point end)
         {
-            if (!IsBlackCell(x, y)) throw new InvalidAddException("The target cell can be only black");
-            if (!IsEmptyCell(x, y)) throw new InvalidAddException("The target cell is already busy.");
+            try
+            {
+                ValidateMove(start, end);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void ValidateAdding(Point position)
+        {
+            if (!IsBlack(position)) throw new InvalidAddException("The target cell can be only black");
+            if (!IsEmpty(position)) throw new InvalidAddException("The target cell is already busy.");
         }
 
         private void ValidateMove(Point start, Point end)
         {
-            if (IsEmptyCell(start.X, start.Y)) throw new InvalidMoveException("Nothing to move");
-            if (!IsEmptyCell(end.X, end.Y)) throw new InvalidMoveException("The target cell is already busy.");
+            if (IsEmpty(start)) throw new InvalidMoveException("Nothing to move");
+            if (!IsEmpty(end)) throw new InvalidMoveException("The target cell is already busy.");
             if (!IsDiagonalMove(start, end)) throw new InvalidMoveException("Piece can only move diagonally");
-            if (MustAttack(Gameboard[start.X, start.Y]))
-                throw new InvalidMoveException("One of the pieces must to attack.");
+            if (IsAnyAliesMustAttack(start)) throw new InvalidMoveException("One of the allies must to attack.");
         }
 
         private void ValidateAttack(Point aggressor, Point target)
         {
-            if (!IsEnemies(aggressor, target)) throw new InvalidTargetException("Target point is not the enemy");
-
-            var endPoint = GetAttackEndpoint(aggressor, target);
-
-            if (!IsEmptyCell(endPoint.X, endPoint.Y))
-                throw new InvalidTargetException("Pice can't be attacked. Endpoint is not free");
+            if (!IsEnemies(aggressor, target)) throw new InvalidTargetException("The target is not the enemy");
+            if (!IsVulnerable(aggressor, target)) throw new InvalidTargetException("The target is invulnerable.");
         }
 
-        private bool MustAttack(string pieceColor)
+        public bool IsAnyAliesMustAttack(Point position)
         {
+            return GetAllAlies(position).Any(alies => GetNearbyVulnurableEnemies(alies).Any());
+        }
+
+        private IEnumerable<Point> GetAllAlies(Point position)
+        {
+            var alies = new List<Point>();
             for (int i = 0; i < Gameboard.GetLength(0); i++)
             {
                 for (int j = 0; j < Gameboard.GetLength(1); j++)
                 {
-                    if (Gameboard[i, j] == pieceColor && Gameboard[i, j] != null)
+                    if (Gameboard[i, j] == Gameboard[position.X, position.Y] &&
+                        !IsEmpty(position))
                     {
-                        if (GetNearbyVulnurableEnemies(new Point(i, j)).Any()) return true;
+                        alies.Add(new Point(i, j));
                     }
                 }
             }
-            return false;
+            return alies;
         }
 
-        private bool IsEmptyCell(int x, int y)
+        private IEnumerable<Point> GetNearbyVulnurableEnemies(Point position)
         {
-            return Gameboard[x, y] == null;
+            return GetNearbyEnemies(position).Where(enemy => IsVulnerable(position, enemy));
         }
 
-        private bool IsBlackCell(int x, int y)
+        private IEnumerable<Point> GetNearbyEnemies(Point position)
         {
-            return (x%2 == 0 && y%2 == 0) || (x%2 != 0 && y%2 != 0);
+            return GetNearbyPossibleMoves(position).Where(move => IsEnemies(position, move));
+        }
+
+        private bool IsEmpty(Point position)
+        {
+            return Gameboard[position.X, position.Y] == null;
+        }
+
+        private bool IsBlack(Point position)
+        {
+            return (position.X%2 == 0 && position.Y%2 == 0) ||
+                   (position.X%2 != 0 && position.Y%2 != 0);
         }
 
         private bool IsDiagonalMove(Point start, Point end)
         {
-            return _diagonalMoves.Any(move => end == (new Point(move.X + start.X, move.Y + start.Y)));
+            return _moves.Any(move => end == (new Point(move.X + start.X, move.Y + start.Y)));
         }
 
         private bool IsEnemies(Point start, Point target)
         {
-            return !IsEmptyCell(target.X, target.Y) && !IsEmptyCell(start.X, start.Y) &&
+            return !IsEmpty(target) && !IsEmpty(start) &&
                    Gameboard[start.X, start.Y] != Gameboard[target.X, target.Y];
         }
 
-        private bool IsNotOutOfRange(Point point)
+        private bool IsVulnerable(Point aggressor, Point target)
         {
-            return point.X >= 0 &&
-                   point.Y >= 0 &&
-                   point.X < Gameboard.GetLength(0) &&
-                   point.Y < Gameboard.GetLength(1);
+            var attackEndoint = DetermineAttackEndpoint(aggressor, target);
+            return IsEmpty(attackEndoint);
         }
 
-        private IEnumerable<Point> GetNearbyVulnurableEnemies(Point start)
+        private Point DetermineAttackEndpoint(Point aggressor, Point target)
         {
-            return
-                GetNearbyEnemies(start)
-                    .Select(enemy => GetAttackEndpoint(start, enemy))
-                    .Where(endPoint => IsEmptyCell(endPoint.X, endPoint.Y));
-        }
-
-        private IEnumerable<Point> GetNearbyEnemies(Point start)
-        {
-            return GetNearbyPossibleMoves(start)
-                .Where(move => IsEnemies(start, move));
-        }
-
-        private IEnumerable<Point> GetNearbyPossibleMoves(Point start)
-        {
-            return _diagonalMoves.Select(move => new Point(start.X + move.X, start.Y + move.Y))
-                .Where(IsNotOutOfRange);
-        }
-
-        private Point GetAttackEndpoint(Point aggressor, Point target)
-        {
-            var vector = GetAttackVector(aggressor, target).First();
+            var vector = GetAttackVector(aggressor, target);
 
             return new Point(aggressor.X + 2*vector.X, aggressor.Y + 2*vector.Y);
         }
 
-        private IEnumerable<Point> GetAttackVector(Point start, Point target)
+        private Point GetAttackVector(Point aggressor, Point target)
         {
-            return _diagonalMoves.Where(m => target == new Point(start.X + m.X, start.Y + m.Y));
+            return _moves.Where(m => target == new Point(aggressor.X + m.X, aggressor.Y + m.Y)).First();
+        }
+
+        private IEnumerable<Point> GetNearbyPossibleMoves(Point position)
+        {
+            return _moves.Select(move => new Point(position.X + move.X, position.Y + move.Y))
+                .Where(IsNotOutOfRange);
+        }
+
+        private bool IsNotOutOfRange(Point position)
+        {
+            return position.X >= 0 &&
+                   position.Y >= 0 &&
+                   position.X < Gameboard.GetLength(0) &&
+                   position.Y < Gameboard.GetLength(1);
         }
     }
+
+    public abstract class BaseRulesManager
+    {
+        
+    }
+
 
     public class InvalidAddException : Exception
     {
@@ -187,46 +212,5 @@ namespace CheckersCore
         }
     }
 
-    public class Cheker:IChecker
-    {
-        public CheckerColor Color { get; private set; }
-
-        public Gameboard Gameboard { get; private set; }
-
-        public Point Position { get; private set; }
-
-        public void Attack(Point target)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Move(Point target)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public interface IChecker
-    {
-         CheckerColor Color { get; }
-
-        IGameboard Gameboard { get; }
-
-        Point Position { get; }
-
-        void Attack(Point target,IRules rules);
-
-        void Move(Point target,IRule);
-    }
-
-    public interface IGameboard
-    {
-    }
-
-    public enum CheckerColor
-    {
-        White,
-        Black
-    }
 }
     
