@@ -1,39 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CheckersCore.Exceptions;
 
 namespace CheckersCore
 {
     public class Game
     {
-        public string[,] Gameboard { get; private set; }
+        public Gameboard Gameboard { get; private set; }
 
-        private readonly Point[] _moves =
+        public Game(int rows, int columns)
         {
-            new Point(1, 1),
-            new Point(1, -1),
-            new Point(-1, -1),
-            new Point(-1, 1)
-        };
-
-        public Game(int width, int height)
-        {
-            Gameboard = new string[width, height];
+            Gameboard = new Gameboard(rows,columns);
         }
 
         public void AddPiece(int x, int y, string color)
         {
             ValidateAdding(new Point(x, y));
-            Gameboard[x, y] = color;
+            Gameboard.Cells[x, y] = color;
         }
 
         public void Move(int x, int y, int targetX, int targetY)
         {
             ValidateMove(new Point(x, y), new Point(targetX, targetY));
-            Gameboard[targetX, targetY] = Gameboard[x, y];
+            Gameboard.Cells[targetX, targetY] = Gameboard.Cells[x, y];
             RemovePiece(new Point(x, y));
         }
 
@@ -117,20 +111,11 @@ namespace CheckersCore
             return alies;
         }
 
-        private IEnumerable<Point> GetNearbyVulnurableEnemies(Point position)
-        {
-            return GetNearbyEnemies(position).Where(enemy => IsVulnerable(position, enemy));
-        }
+        
 
-        private IEnumerable<Point> GetNearbyEnemies(Point position)
-        {
-            return GetNearbyPossibleMoves(position).Where(move => IsEnemies(position, move));
-        }
+        
 
-        private bool IsEmpty(Point position)
-        {
-            return Gameboard[position.X, position.Y] == null;
-        }
+        
 
         private bool IsBlack(Point position)
         {
@@ -143,10 +128,79 @@ namespace CheckersCore
             return _moves.Any(move => end == (new Point(move.X + start.X, move.Y + start.Y)));
         }
 
-        private bool IsEnemies(Point start, Point target)
+    }
+
+    public abstract class BaseActionManager
+    {
+        public Gameboard Gameboard { get; private set; }
+
+        protected readonly Point[] Moves =
         {
-            return !IsEmpty(target) && !IsEmpty(start) &&
-                   Gameboard[start.X, start.Y] != Gameboard[target.X, target.Y];
+            new Point(1, 1),
+            new Point(1, -1),
+            new Point(-1, -1),
+            new Point(-1, 1)
+        };
+
+        protected BaseActionManager(Gameboard gameboard)
+        {
+            Gameboard = gameboard;
+        }
+
+        protected bool IsEmpty(Point position)
+        {
+            return Gameboard.Cells[position.X, position.Y] == null;
+        }
+    }
+
+    public class Gameboard
+    {
+        public object[,] Cells { get; private set; }
+        public int Rows { get; private set; }
+        public int Columns { get; private set; }
+
+        public Gameboard(int rows, int columns)
+        {
+            Rows = rows;
+            Columns = columns;
+            Cells = new object[Rows, Columns];
+        }
+    }
+    public class MoveActionManager : BaseActionManager
+    {
+        public MoveActionManager(Gameboard gameboard) : base(gameboard)
+        {
+        }
+        protected IEnumerable<Point> GetNearbyPossibleMoves(Point position)
+        {
+            return Moves.Select(move => new Point(position.X + move.X, position.Y + move.Y))
+                .Where(IsNotOutOfRange);
+        }
+
+        protected bool IsNotOutOfRange(Point position)
+        {
+            return position.X >= 0 &&
+                   position.Y >= 0 &&
+                   position.X < Gameboard.Rows &&
+                   position.Y < Gameboard.Columns;
+        }
+    }
+    public class AttackActionManager : MoveActionManager
+    {
+        public AttackActionManager(string[,] gameboard) : base(gameboard)
+        {
+        }
+
+        private Point DetermineAttackEndpoint(Point aggressor, Point target)
+        {
+            var vector = GetAttackVector(aggressor, target);
+
+            return new Point(aggressor.X + 2 * vector.X, aggressor.Y + 2 * vector.Y);
+        }
+
+        private Point GetAttackVector(Point aggressor, Point target)
+        {
+            return Moves.Where(m => target == new Point(aggressor.X + m.X, aggressor.Y + m.Y)).First();
         }
 
         private bool IsVulnerable(Point aggressor, Point target)
@@ -154,63 +208,21 @@ namespace CheckersCore
             var attackEndoint = DetermineAttackEndpoint(aggressor, target);
             return IsEmpty(attackEndoint);
         }
-
-        private Point DetermineAttackEndpoint(Point aggressor, Point target)
+        private bool IsEnemies(Point start, Point target)
         {
-            var vector = GetAttackVector(aggressor, target);
-
-            return new Point(aggressor.X + 2*vector.X, aggressor.Y + 2*vector.Y);
+            return !IsEmpty(target) && !IsEmpty(start) &&
+                   Gameboard[start.X, start.Y] != Gameboard[target.X, target.Y];
         }
 
-        private Point GetAttackVector(Point aggressor, Point target)
+        private IEnumerable<Point> GetNearbyVulnurableEnemies(Point position)
         {
-            return _moves.Where(m => target == new Point(aggressor.X + m.X, aggressor.Y + m.Y)).First();
+            return GetNearbyEnemies(position).Where(enemy => IsVulnerable(position, enemy));
         }
 
-        private IEnumerable<Point> GetNearbyPossibleMoves(Point position)
+        private IEnumerable<Point> GetNearbyEnemies(Point position)
         {
-            return _moves.Select(move => new Point(position.X + move.X, position.Y + move.Y))
-                .Where(IsNotOutOfRange);
-        }
-
-        private bool IsNotOutOfRange(Point position)
-        {
-            return position.X >= 0 &&
-                   position.Y >= 0 &&
-                   position.X < Gameboard.GetLength(0) &&
-                   position.Y < Gameboard.GetLength(1);
+            return GetNearbyPossibleMoves(position).Where(move => IsEnemies(position, move));
         }
     }
-
-    public abstract class BaseRulesManager
-    {
-        
-    }
-
-
-    public class InvalidAddException : Exception
-    {
-        public InvalidAddException(string message) : base(message)
-        {
-
-        }
-    }
-
-    public class InvalidMoveException : Exception
-    {
-        public InvalidMoveException(string message) : base(message)
-        {
-            
-        }
-    }
-
-    public class InvalidTargetException : Exception
-    {
-        public InvalidTargetException(string message) : base(message)
-        {
-            
-        }
-    }
-
 }
     

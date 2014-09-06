@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace CheckersCore
 {
-    public static class CoordinatesHelper
+    public static class CoordinatesTranslator
     {
         private static readonly Dictionary<string, int> LiteralDictionary = new Dictionary<string, int>();
 
-        static CoordinatesHelper()
+        static CoordinatesTranslator()
         {
             LiteralDictionary["1"] = 0;
             LiteralDictionary["2"] = 1;
