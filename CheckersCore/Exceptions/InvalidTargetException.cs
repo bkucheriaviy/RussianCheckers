@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace CheckersCore.Exceptions
+namespace CheckersCore
 {
     public class InvalidTargetException : Exception
     {

@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CoordinatesTranslator.cs" />
+    <Compile Include="Helpers\CoordinatesTranslator.cs" />
     <Compile Include="Exceptions\InvalidAddException.cs" />
     <Compile Include="Exceptions\InvalidMoveException.cs" />
     <Compile Include="Exceptions\InvalidTargetException.cs" />
