@@ -43,7 +43,7 @@ namespace CheckersCore
     }
     public class Gameboard
     {
-        public readonly object[,] Cells { get; private set; }
+        public object[,] Cells { get; private set; }
         public int RowsCount { get; private set; }
         public int ColumnsCount { get; private set; }
 
@@ -54,7 +54,6 @@ namespace CheckersCore
             ColumnsCount = columns;
             Cells = new object[RowsCount, ColumnsCount];
         }
-
     }
     public abstract class BaseGameboardActionManager
     {
