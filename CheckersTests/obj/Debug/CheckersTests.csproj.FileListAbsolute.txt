@@ -1,7 +1,0 @@
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\bin\Debug\CheckersTests.dll
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\bin\Debug\CheckersTests.pdb
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\obj\Debug\CheckersTests.csprojResolveAssemblyReference.cache
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\obj\Debug\CheckersTests.dll
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\obj\Debug\CheckersTests.pdb
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\bin\Debug\CheckersCore.dll
-C:\Users\bkucheriaviy\Desktop\HelloWorldProjects\CheckersCore\CheckersTests\bin\Debug\CheckersCore.pdb
