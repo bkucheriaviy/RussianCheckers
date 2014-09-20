@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CheckersCore
+namespace CheckersCore.Exceptions
 {
     public class InvalidMoveException : Exception
     {

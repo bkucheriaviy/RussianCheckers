@@ -40,11 +40,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionManagers\AddRemoveActionManager.cs" />
+    <Compile Include="ActionManagers\AttackActionManager.cs" />
+    <Compile Include="ActionManagers\BaseActionManager.cs" />
+    <Compile Include="ActionManagers\MoveActionManager.cs" />
+    <Compile Include="Gameboard.cs" />
     <Compile Include="Helpers\CoordinatesTranslator.cs" />
     <Compile Include="Exceptions\InvalidAddException.cs" />
     <Compile Include="Exceptions\InvalidMoveException.cs" />
     <Compile Include="Exceptions\InvalidTargetException.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="Interfaces\IActionManager.cs" />
+    <Compile Include="Interfaces\IGameboard.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
